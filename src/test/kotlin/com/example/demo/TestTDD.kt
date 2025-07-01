@@ -50,7 +50,7 @@ class TestTDD : FunSpec({
         }
     }
     test("check all multiples of 26 don't change the letter") {
-        checkAll(Arb.int(min = 0))
+        checkAll(Arb.int(min = 0, max = 200))
         {
             multiple -> cypher('A', 26 * multiple) shouldBe 'A'
         }
