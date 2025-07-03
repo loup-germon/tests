@@ -28,12 +28,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.postgresql:postgresql")
+	implementation("org.liquibase:liquibase-core")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 	testImplementation("io.kotest:kotest-assertions-core:5.9.1")
 	testImplementation("io.kotest:kotest-property:5.9.1")
 	testImplementation("io.mockk:mockk:1.14.4")
+	testIntegrationImplementation("org.testcontainers:postgresql:1.19.1")
+	testIntegrationImplementation("org.testcontainers:jdbc-test:1.12.0")
+	testIntegrationImplementation("org.testcontainers:testcontainers:1.19.1")
+	testIntegrationImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
 	testIntegrationImplementation("io.mockk:mockk:1.13.8")
 	testIntegrationImplementation("io.kotest:kotest-assertions-core:5.9.1")
 	testIntegrationImplementation("io.kotest:kotest-runner-junit5:5.9.1")
@@ -66,4 +71,8 @@ kotlin {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	reports {
+		junitXml.required.set(true)
+		html.required.set(true)
+	}
 }
