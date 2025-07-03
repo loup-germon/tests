@@ -2,7 +2,8 @@
 
 import com.example.demo.domain.model.Book
 
-interface WriteToDb {
+
+interface BookPort {
     fun findAll(): List<Book>
     fun insert(value: Book)
 }

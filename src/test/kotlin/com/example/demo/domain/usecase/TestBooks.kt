@@ -1,21 +1,19 @@
 ﻿package com.example.demo.domain.usecase
 
 import com.example.demo.domain.model.Book
-import com.example.demo.domain.port.WriteToDb
+import com.example.demo.domain.port.BookPort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.arbitrary
-import io.kotest.property.arbitrary.bind
 import io.kotest.property.arbitrary.filter
 import io.kotest.property.arbitrary.list
 import io.kotest.property.arbitrary.string
 import io.kotest.property.checkAll
-import io.mockk.mockk
 
-class FakeDb : WriteToDb {
+class FakeDb : BookPort {
     private val db = mutableListOf<Book>()
     override fun findAll(): List<Book> {
         return db
@@ -31,7 +29,7 @@ class MockKDbTest : FunSpec({
     test("insert in db")
     {
         val fake = FakeDb()
-        val service = ServiceLibrary(fake)
+        val service = BookUseCase(fake)
         val book1 = Book("stephen king", "it")
         service.insert(book1)
         service.findAll().size shouldBe 1
@@ -41,7 +39,7 @@ class MockKDbTest : FunSpec({
     test("empty strings tests")
     {
         val fake = FakeDb()
-        val service = ServiceLibrary(fake)
+        val service = BookUseCase(fake)
         val book1 = Book("", "it")
         val book2 = Book("dsfdfsfd", "")
         val book3 = Book("   ", "eee")
@@ -54,7 +52,7 @@ class MockKDbTest : FunSpec({
     }
     test("alphabetical order") {
         val fake = FakeDb()
-        val service = ServiceLibrary(fake)
+        val service = BookUseCase(fake)
         val book1 = Book("Maupassant", "Asddg")
         val book2 = Book("Balzac", "aSddH")
         val book3 = Book("Stephen King", "az zz")
@@ -72,7 +70,7 @@ class MockKDbTest : FunSpec({
 
     test("property test") {
         val fake = FakeDb()
-        val service = ServiceLibrary(fake)
+        val service = BookUseCase(fake)
 
         // Generator for non-empty strings
         val nonEmptyStringArb = Arb.string(minSize = 1, maxSize = 20).filter { value -> value.trim().isNotEmpty() }
