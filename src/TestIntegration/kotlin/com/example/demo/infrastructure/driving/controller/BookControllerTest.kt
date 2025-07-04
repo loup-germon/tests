@@ -2,22 +2,23 @@
 
 import com.example.demo.domain.model.Book
 import com.example.demo.domain.usecase.BookUseCase
+import com.example.demo.infrastructure.driven.adapter.BookDAO
+import com.example.demo.infrastructure.driving.controller.dto.BookDTO
 import com.ninjasquad.springmockk.MockkBean
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.spec.style.Test
 import io.kotest.matchers.collections.shouldHaveSize
+import io.mockk.verify
 import io.mockk.every
-import org.springframework.beans.factory.annotation.Autowired
+import io.mockk.justRun
+import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import org.springframework.web.client.HttpServerErrorException
+
 
 @WebMvcTest(BookController::class)
-class BookControllerTest(@Autowired val mockMvc: MockMvc, @MockkBean val bookUC: BookUseCase): FunSpec(
+class BookControllerTest(val mockMvc: MockMvc, @MockkBean val bookUC: BookUseCase): FunSpec(
     {
 
         test("use case spring test") {
@@ -33,7 +34,7 @@ class BookControllerTest(@Autowired val mockMvc: MockMvc, @MockkBean val bookUC:
             val result = mockMvc.get("/books")
                 .andExpect {
                     status { isOk() }
-                    content { contentType("application/json") }
+                    content { contentType(APPLICATION_JSON) }
                     content {
                         json(
                             """
@@ -50,25 +51,71 @@ class BookControllerTest(@Autowired val mockMvc: MockMvc, @MockkBean val bookUC:
                 }
                 .andReturn()
         }
-        test("Invalid input: POST /books with empty JSON should return 400") {
+        test("POST /books route") {
+            justRun { bookUC.insert(any()) }
             val result = mockMvc.post("/books") {
-                contentType = MediaType.APPLICATION_JSON
-                content = "{}"
+                content = """
+                {
+                  "title": "Les misérables",
+                  "author": "Victor Hugo"
+                }
+            """.trimIndent()
+                contentType = APPLICATION_JSON
+                accept = APPLICATION_JSON
+            }.andExpect {
+                status { isCreated() }
             }
+            val expected = Book(
+                title = "Les misérables",
+                author = "Victor Hugo"
+            )
+
+            verify(exactly = 1) { bookUC.insert(any()) }
+        }
+
+        // ****** NOT WORKING WHEN I ADD THE ERROR HANDLER ****** //
+        test("Invalid input POST /books route") {
+            justRun { bookUC.insert(any()) }
+            val result = mockMvc.post("/books") {
+                content = """
+                {
+                  "MAUVAIS TRUC MACHIN": "Les misérables",
+                  "author": "Victor Hugo"
+                }
+            """.trimIndent()
+                contentType = APPLICATION_JSON
+                accept = APPLICATION_JSON
+            }.andExpect {
+                status { isBadRequest() }
+            }
+        }
+
+        // ****** NOT WORKING WHEN I REMOVE THE ERROR HANDLER ****** //
+        test("Domain exception: findAll throws → should return 500") {
+            justRun { bookUC.reserveBook(any(), any()) }
+
+            val result = mockMvc.get("/books")
                 .andExpect {
-                    status { isBadRequest() }
+                    status { isInternalServerError() }
                 }
                 .andReturn()
         }
 
-        test("Domain exception: findAll throws → should return 500") {
-            every { bookUC.findAll() } throws RuntimeException("Simulated failure")
+        test("POST /books/reserve route") {
+            justRun { bookUC.reserveBook(any(), any()) }
 
-            val result = mockMvc.get("/books")
-                .andExpect {
-                    status { is5xxServerError() }
-                }
-                .andReturn()
+            mockMvc.post("/books/reserve") {
+                content = """
+            {
+              "title": "Les misérables",
+              "author": "Victor Hugo"
+            }
+        """.trimIndent()
+                contentType = APPLICATION_JSON
+                accept = APPLICATION_JSON
+            }.andExpect {
+                status { isOk() }
+            }
         }
 
     })

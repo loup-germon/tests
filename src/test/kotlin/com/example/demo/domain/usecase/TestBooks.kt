@@ -22,11 +22,23 @@ class FakeDb : BookPort {
     override fun insert(value: Book) {
         db.add(value)
     }
+
+    override fun reserve(author: String, title: String) {
+        db.forEach { if (it.title == title && it.author == author) {it.reserved = true} }
+    }
+
+    override fun isReserved(author: String, title: String): Boolean {
+        return db.any { it.title == title && it.author == author && it.reserved }
+    }
+
+    override fun bookExists(author: String, title: String): Boolean {
+        return db.any { it.author == author && it.title == title }
+    }
 }
 
 
 class MockKDbTest : FunSpec({
-    test("insert in db")
+    test("Example test : Inserting book and retrieving it with findAll")
     {
         val fake = FakeDb()
         val service = BookUseCase(fake)
@@ -36,7 +48,7 @@ class MockKDbTest : FunSpec({
         service.findAll().first().author shouldBe "stephen king"
         service.findAll().first().title shouldBe "it"
     }
-    test("empty strings tests")
+    test("Example test : Empty strings in author or title should throw IllegalArgument")
     {
         val fake = FakeDb()
         val service = BookUseCase(fake)
@@ -50,13 +62,13 @@ class MockKDbTest : FunSpec({
         shouldThrow<IllegalArgumentException> { service.insert(book3) }
         shouldThrow<IllegalArgumentException> { service.insert(book4) }
     }
-    test("alphabetical order") {
+    test("Example test : Find all returns books in alphabetical order") {
         val fake = FakeDb()
         val service = BookUseCase(fake)
         val book1 = Book("Maupassant", "Asddg")
         val book2 = Book("Balzac", "aSddH")
         val book3 = Book("Stephen King", "az zz")
-        val book4 = Book("Stephen King", "Party no")
+        val book4 = Book("Stephen King", "It")
 
         service.insert(book3)
         service.insert(book2)
@@ -68,7 +80,7 @@ class MockKDbTest : FunSpec({
         service.findAll()[3] shouldBe book4
     }
 
-    test("property test") {
+    test("Property test : All books inserted are returned in FindAll") {
         val fake = FakeDb()
         val service = BookUseCase(fake)
 
@@ -88,6 +100,51 @@ class MockKDbTest : FunSpec({
             bookList.forEach { book -> getList.shouldContain(book) }
 
         }
+    }
+
+    test("Property test : All books inserted start unreserved") {
+        val fake = FakeDb()
+        val service = BookUseCase(fake)
+
+        // Generator for non-empty strings
+        val nonEmptyStringArb = Arb.string(minSize = 1, maxSize = 20).filter { value -> value.trim().isNotEmpty() }
+
+        val bookArbitrary = arbitrary {
+            val author = nonEmptyStringArb.bind()
+            val title = nonEmptyStringArb.bind()
+            Book(title, author)
+        }
+
+        val bookListArb = Arb.list(bookArbitrary, 1..5)
+        checkAll(30, bookListArb) {
+                bookList -> service.insertAll(bookList)
+            val getList = service.findAll()
+            bookList.forEach { book -> book.reserved shouldBe false }
+
+        }
+    }
+
+    test("Example test : reserving book") {
+        val fake = FakeDb()
+        val service = BookUseCase(fake)
+        val book1 = Book("Maupassant", "Asddg")
+        service.insert(book1)
+        service.findAll().first().reserved shouldBe false
+        service.reserveBook("Maupassant", "Asddg")
+        service.findAll().first().reserved shouldBe true
+    }
+    test("Example test  : Can't reserve twice") {
+        val fake = FakeDb()
+        val service = BookUseCase(fake)
+        val book1 = Book("Maupassant", "Asddg")
+        service.insert(book1)
+        service.reserveBook("Maupassant", "Asddg")
+        shouldThrow<Exception> { service.reserveBook("Maupassant", "Asddg")}
+    }
+    test("Example test : Can't reserve a book that does not exist") {
+        val fake = FakeDb()
+        val service = BookUseCase(fake)
+        shouldThrow<Exception> { service.reserveBook("Maupassant", "Asddg")}
     }
 
 })
