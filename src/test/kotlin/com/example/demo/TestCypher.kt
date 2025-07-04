@@ -8,7 +8,7 @@ import io.kotest.property.arbitrary.int
 import io.kotest.property.checkAll
 
 
-class TestTDD : FunSpec({
+class TestCypher : FunSpec({
 
     test("test cypher A + 2"){
         cypher('A',2) shouldBe 'C'

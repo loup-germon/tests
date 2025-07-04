@@ -1,8 +1,6 @@
-﻿package com.example.demo.infrastructure.driving.controller
+﻿package com.example.demo.infrastructure.driven.adapter
 
 import com.example.demo.domain.model.Book
-import com.example.demo.infrastructure.driven.adapter.BookDAO
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldBeEmpty

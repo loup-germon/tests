@@ -1,9 +1,8 @@
-﻿package com.example.demo.infrastructure.driving.controller
+﻿package com.example.demo.infrastructure.driving.web
 
 import com.example.demo.domain.model.Book
 import com.example.demo.domain.usecase.BookUseCase
-import com.example.demo.infrastructure.driven.adapter.BookDAO
-import com.example.demo.infrastructure.driving.controller.dto.BookDTO
+import com.example.demo.infrastructure.driving.controller.BookController
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,7 +17,7 @@ import org.springframework.test.web.servlet.post
 
 
 @WebMvcTest(BookController::class)
-class BookControllerTest(val mockMvc: MockMvc, @MockkBean val bookUC: BookUseCase): FunSpec(
+class BookControllerIT(val mockMvc: MockMvc, @MockkBean val bookUC: BookUseCase): FunSpec(
     {
 
         test("use case spring test") {
